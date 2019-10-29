@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+GSE*
+*.txt
+test*
+*.csv
+*.xlsx
+*.xls
+SRR*
