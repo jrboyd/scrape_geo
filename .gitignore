@@ -10,3 +10,4 @@ test*
 *.xls
 SRR*
 DOHH2_DOHH2_ChIPseq
+fastqs_*
