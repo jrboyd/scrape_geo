@@ -82,7 +82,7 @@ scrape_geo = function(GSE_id,
   }
   names(gsms) = NULL
   
-  mat = matrix("", nrow = 0, ncol = length(key_str) + sum(do_srr))
+  mat = matrix("", nrow = 0, ncol = 2+length(key_str) + sum(do_srr))
   # rownames(mat) = gsms
   base_url = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc="
   for(g in gsms){
@@ -111,7 +111,7 @@ scrape_geo = function(GSE_id,
         m = gregexpr(pattern = "SRR[0-9]+", text = srx_lines)
         srr = regmatches(x = srx_lines, m = m) %>% unlist %>% unique
       }
-      newL = cbind(matrix(rep(vals, length(srr)), nrow = length(srr), byrow = TRUE), srr)
+      newL = cbind(matrix(rep(c(GSE_id, g, vals), length(srr)), nrow = length(srr), byrow = TRUE), srr)
       print(newL)
       mat = rbind(mat, newL)
       #mat[g, ] = newL

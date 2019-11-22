@@ -1,46 +1,45 @@
 source("functions_scrape_geo.R")
 library(data.table)
-gse = "GSE62847" #will be combined with GSE19465
-chara = list("cell type")
-mat = scrape_geo(GSE_id = gse, 
-                 do_srr = TRUE, debug = F, key_str = c("Title", rep("Chara", length(chara))), 
-                 key_idx = append(list(5), chara))#, "cell line", "chip_antibody", "donor_id", "donor_sex"))
+gse = "DOHH2" #will be combined with GSE19465
+chara = list("antibody", "line")
+mat1 = scrape_geo(GSE_id = "GSE86744", 
+                 do_srr = TRUE, debug = FALSE, 
+                 key_str = c("Title", rep("Chara", length(chara))), 
+                 key_idx = append(list(5), chara))
 
+mat2 = scrape_geo(GSE_id = "GSE86701", 
+                 do_srr = TRUE, debug = FALSE, 
+                 key_str = c("Title", rep("Chara", length(chara))), 
+                 key_idx = append(list(5), chara))
+
+mat3 = scrape_geo(GSE_id = "GSE86678", 
+                 do_srr = TRUE, debug = FALSE, 
+                 key_str = c("Title", rep("Chara", length(chara))), 
+                 key_idx = append(list(5), chara))
+
+mat = rbind(mat1, mat2, mat3)
 dt = as.data.table(mat)
-colnames(dt) = c("description", unlist(chara), "srr", "gsm")
+colnames(dt) = c("gse", "gsm", "title", unlist(chara), "srr")
 
-odir = paste0(gse, "_DT_Kasumi1_ChIPseq")
+odir = paste0(gse, "_DOHH2_ChIPseq")
 dir.create(odir)
 
-fwrite(mat, file = file.path(odir, "scrape_result.csv"))
+
 save(mat, dt, file = file.path(odir, "scrape_result.save"))
 
 setwd(odir)
 library(data.table)
-dt = as.data.table(mat)
-for(ch in chara){
-  dt[[ch]] = sub(".+: ", "", dt[[ch]])
-}
-dt[, cell := "H9norm"]
-dt[grepl("PAX6", `cell type`), cell := "H9pax6"]
-dt[, experiment := tstrsplit(description, "_", keep = 1)]
-dt[, cycle := tstrsplit(description, "_", keep = 3)]
-dt[is.na(cycle), cycle := "async"]
-dt[, rep := paste0("rep", seq(.N)), .(cell, experiment, cycle)]
-dt = dt[rep != "rep2"]
-dt[, file_name := paste0(paste(sep = "_", cell, experiment, cycle, rep), ".", srr, ".", gsm, ".fastq")]
-# dt = dt[grepl("RNA", description)]
-# dt[is.na(condition), condition := "control"]
-# dt[`cell subtype` == "Tamoxifen Resistance", `cell subtype` := "tamR"]
-# dt[`cell subtype` == "RUNX2 DOX inducible model", `cell subtype` := "Runx2Dox"]
-# dt[condition == "Full Medium + Doxycycline", condition := "wDox"]
-# dt[condition == "Full Medium", condition := "noDox"]
-# dt[, rep := paste0("R", seq(.N)), by = .(`cell subtype`, condition)]
 
-# dt[, cell := sub("_.+", "", id)]
-# dt[, rep := seq(.N), by = .(`cell`)]
-# dt[, file_name := paste0(paste(cell, mark, rep, sep = '_'), ".",gsm, ".fastq")]
-# dt[, file_name := sub("replicate", "rep", file_name)]
+dt[, mark := sub(".+: ", "", antibody)]
+dt[mark == "Control", mark := "input"]
+dt[grepl("me3", mark), mark := toupper(mark)]
+dt[, cell := sub(".+: ", "", line)]
+
+dt[, rep := paste0("R", as.numeric(factor(gsm))), .(mark)]
+
+dt[, file_name := paste0(cell, "_", mark, "_", rep, ".", seq_len(.N),  ".fastq")]
+
+fwrite(dt, file = file.path(odir, "scrape_result.csv"))
 
 fastq_names = dt$file_name
 srrs = dt$srr

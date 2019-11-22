@@ -1,26 +1,38 @@
 source("functions_scrape_geo.R")
-
-gse = "GSE17312" #will be combined with GSE19465
 chara = list("line", "cell_type", "donor_sex", "donor_age", "donor_id", "chip_antibody")
-skip = "GSM537640"
-mat = scrape_geo(GSE_id = gse, 
+
+gse = "CD34" #will be combined with GSE19465
+
+# skip = "GSM537640"
+mat1 = scrape_geo(GSE_id = "GSE17312", 
                  # gsm_todo = "GSM537640", 
                  do_srr = TRUE, debug = F, key_str = c("Title", rep("Chara", length(chara))), 
                  key_idx = append(list(5), chara))#, "cell line", "chip_antibody", "donor_id", "donor_sex"))
-mat = cbind(mat, rownames(mat))
+# mat = cbind(mat, rownames(mat))
 
 mat2 = scrape_geo(GSE_id = "GSE19465", 
                  # gsm_todo = "GSM537640", 
                  do_srr = TRUE, debug = F, key_str = c("Title", rep("Chara", length(chara))), 
                  key_idx = append(list(5), chara))#
-mat2 = cbind(mat2, rownames(mat2))
+# mat2 = cbind(mat2, rownames(mat2))
+mat = rbind(mat1, mat2)
 
-save(mat, mat2, file = "GSE17312.save")
+save(mat, file = "GSE17312_and_GSE19465
+     .save")
 
-mat = rbind(mat, mat2)
+patient_mat = mat[grepl("(01517)|(01536)|(01549)|(01562)", mat[,8]),]
 
+mat[grepl("H3K4me3.+Primary", mat[,3]),]
+
+
+mat_k27 = mat[grepl("H3K27me3.+Mobilized CD34", mat[,3]),]
+mat_k27[grepl("01517", mat_k27[,8]),]
+mat_k27[grepl("01536", mat_k27[,8]),]
+mat_k27[grepl("01549", mat_k27[,8]),]
+mat[grepl("WCE.+Mobilized CD34", mat[,3]),]
+mat[grepl("WCE", mat[,3]),]
+#STOPPED HERE
 # write.table(mat, file = "GSE63018_srrs.csv", col.names = FALSE, quote = FALSE, sep = ",", row.names = FALSE)
-
 # mat[,2] = sub("Biological_Replicate", "rep", mat[,1])
 
 odir = paste0(gse, "_fastqs")
