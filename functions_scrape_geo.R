@@ -44,6 +44,23 @@ scrape_gse = function(
   gse
 }
 
+readLines.recursive = function(url, wait = .5){
+  success = FALSE
+  tryCatch({
+    con = curl::curl(url = url)
+    lines = readLines(con)  
+    close(con)
+    success = TRUE
+  }, error = function(e){
+    message(e)
+    
+  })  
+  if(!success){
+    lines = readLines.recursive(url, wait)
+  }
+  lines
+}
+
 #' Title
 #'
 #' @return
@@ -59,13 +76,14 @@ scrape_geo = function(GSE_id,
                       key_str = c("Source name", "Chara", "Description"), 
                       key_idx = as.list(rep(5, length(key_str)))){
   stopifnot(length(key_str) == length(key_idx))
+  
+  
+  
   if(!is.null(gsm_override)){
     gsms = gsm_override
   }else{
     gse_url = paste0("http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=", GSE_id)
-    con = curl::curl(url = gse_url)
-    gse_lines = readLines(con)
-    close(con)
+    gse_lines = readLines.recursive(gse_url)
     
     keep = which(grepl("GSM", gse_lines))
     gsm_lines = gse_lines[keep]
@@ -88,9 +106,12 @@ scrape_geo = function(GSE_id,
   for(g in gsms){
     print(g)
     url = paste0(base_url, g)
-    con = curl::curl(url = url)
-    gsm_lines = readLines(con)
-    close(con)
+    message(url)
+    
+    
+    
+
+    gsm_lines = readLines.recursive(url)
     
     if(debug) browser()
     
@@ -105,9 +126,7 @@ scrape_geo = function(GSE_id,
         m = regexpr(pattern = "http.+term=SRX[0-9]+", text = srx_line)
         srx_url = regmatches(x = srx_line, m = m)
         
-        srx_con = curl::curl(srx_url)
-        srx_lines = readLines(srx_con)
-        close(srx_con)
+        srx_lines = readLines.recursive(srx_url)
         m = gregexpr(pattern = "SRR[0-9]+", text = srx_lines)
         srr = regmatches(x = srx_lines, m = m) %>% unlist %>% unique
       }
